@@ -1,0 +1,5 @@
+{
+  "AppSyncApiName": "MooRide20Data",
+  "DynamoDBBillingMode": "PAY_PER_REQUEST",
+  "DynamoDBEnableServerSideEncryption": false
+}

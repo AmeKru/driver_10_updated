@@ -1,0 +1,35 @@
+type CLEMorning @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  BusStop: String!
+  TripNo: Int!
+  Count: Int!
+}
+
+type KAPMorning @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  BusStop: String!
+  TripNo: Int!
+  Count: Int!
+}
+
+type BOOKINGDETAILS5 @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  MRTStation: String!
+  TripNo: Int!
+  BusStop: String!
+}
+
+type KAPAfternoon @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  BusStop: String!
+  TripNo: Int!
+  Count: Int!
+}
+
+type CLEAfternoon @model @auth(rules: [{allow: public}]) {
+  id: ID!
+  BusStop: String!
+  TripNo: Int!
+  Count: Int!
+}
+ 
