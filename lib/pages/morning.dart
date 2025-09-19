@@ -405,8 +405,7 @@ class _MorningPageState extends State<MorningPage> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    if (now.hour >= MyApp.screenTime_hour &&
-        now.minute >= MyApp.screenTime_min) {
+    if (now.hour >= MyApp.screenTimeHour && now.minute >= MyApp.screenTimeMin) {
       Future.delayed(Duration.zero, () {
         Navigator.pushReplacement(
           context,

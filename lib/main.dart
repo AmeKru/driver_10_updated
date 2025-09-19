@@ -4,6 +4,7 @@ import 'package:driver_10_updated/pages/bus_data.dart';
 import 'package:driver_10_updated/pages/loading.dart';
 import 'package:driver_10_updated/pages/map_page.dart';
 import 'package:driver_10_updated/pages/morning.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
 void main() async {
@@ -15,14 +16,14 @@ void main() async {
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
 
-  static int screenTime_hour = 13; // 13/1PM 15/3PM to afternoon service
-  static int screenTime_min = 00;
+  static int screenTimeHour = 13; // 13/1PM 15/3PM to afternoon service
+  static int screenTimeMin = 00;
 
   @override
-  _MyAppState createState() => _MyAppState();
+  MyAppState createState() => MyAppState();
 }
 
-class _MyAppState extends State<MyApp> {
+class MyAppState extends State<MyApp> {
   late Timer _timer;
   String _currentRoute = '/'; // Default route
   DateTime now = DateTime.now();
@@ -40,14 +41,18 @@ class _MyAppState extends State<MyApp> {
 
   // Function to check the current time and update the route
   void _checkTime() {
-    print('Checking time');
+    if (kDebugMode) {
+      print('Checking time');
+    }
     setState(() {
       DateTime now = DateTime.now();
 
-      print('hour: ${now.hour} minute: ${now.minute}');
+      if (kDebugMode) {
+        print('hour: ${now.hour} minute: ${now.minute}');
+      }
       _currentRoute =
-          (now.hour >= MyApp.screenTime_hour &&
-              now.minute >= MyApp.screenTime_min)
+          (now.hour >= MyApp.screenTimeHour &&
+              now.minute >= MyApp.screenTimeMin)
           ? '/home'
           : '/morning';
     });

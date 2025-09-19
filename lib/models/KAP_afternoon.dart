@@ -154,18 +154,16 @@ class KAPAfternoon extends amplify_core.Model {
     buffer.write("id=" + "$id" + ", ");
     buffer.write("BusStop=" + "$_BusStop" + ", ");
     buffer.write(
-      "TripNo=" + (_TripNo != null ? _TripNo!.toString() : "null") + ", ",
+      "TripNo=" + (_TripNo != null ? _TripNo.toString() : "null") + ", ",
     );
     buffer.write(
-      "Count=" + (_Count != null ? _Count!.toString() : "null") + ", ",
+      "Count=" + (_Count != null ? _Count.toString() : "null") + ", ",
     );
     buffer.write(
-      "createdAt=" +
-          (_createdAt != null ? _createdAt!.format() : "null") +
-          ", ",
+      "createdAt=" + (_createdAt != null ? _createdAt.format() : "null") + ", ",
     );
     buffer.write(
-      "updatedAt=" + (_updatedAt != null ? _updatedAt!.format() : "null"),
+      "updatedAt=" + (_updatedAt != null ? _updatedAt.format() : "null"),
     );
     buffer.write("}");
 

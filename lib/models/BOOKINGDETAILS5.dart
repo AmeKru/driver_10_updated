@@ -154,16 +154,14 @@ class BOOKINGDETAILS5 extends amplify_core.Model {
     buffer.write("id=" + "$id" + ", ");
     buffer.write("MRTStation=" + "$_MRTStation" + ", ");
     buffer.write(
-      "TripNo=" + (_TripNo != null ? _TripNo!.toString() : "null") + ", ",
+      "TripNo=" + (_TripNo != null ? _TripNo.toString() : "null") + ", ",
     );
     buffer.write("BusStop=" + "$_BusStop" + ", ");
     buffer.write(
-      "createdAt=" +
-          (_createdAt != null ? _createdAt!.format() : "null") +
-          ", ",
+      "createdAt=" + (_createdAt != null ? _createdAt.format() : "null") + ", ",
     );
     buffer.write(
-      "updatedAt=" + (_updatedAt != null ? _updatedAt!.format() : "null"),
+      "updatedAt=" + (_updatedAt != null ? _updatedAt.format() : "null"),
     );
     buffer.write("}");
 
