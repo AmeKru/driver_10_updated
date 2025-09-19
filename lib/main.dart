@@ -1,6 +1,6 @@
 import 'dart:async'; // To use Timer
 
-import 'package:driver_10_updated/pages/busdata.dart';
+import 'package:driver_10_updated/pages/bus_data.dart';
 import 'package:driver_10_updated/pages/loading.dart';
 import 'package:driver_10_updated/pages/map_page.dart';
 import 'package:driver_10_updated/pages/morning.dart';
@@ -67,8 +67,8 @@ class _MyAppState extends State<MyApp> {
       initialRoute: _currentRoute, // Use the dynamic route
       routes: {
         '/': (context) => Loading(),
-        '/home': (context) => Map_Page(),
-        '/morning': (context) => Morning_Page(),
+        '/home': (context) => MapPage(),
+        '/morning': (context) => MorningPage(),
       },
     );
   }

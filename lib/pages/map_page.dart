@@ -6,39 +6,40 @@ import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:driver_10_updated/amplifyconfiguration.dart';
-import 'package:driver_10_updated/models/ModelProvider.dart';
-import 'package:driver_10_updated/pages/busdata.dart';
+import 'package:driver_10_updated/models/model_provider.dart';
+import 'package:driver_10_updated/pages/bus_data.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:uuid/uuid.dart';
 
-class Map_Page extends StatefulWidget {
-  const Map_Page({super.key});
+class MapPage extends StatefulWidget {
+  const MapPage({super.key});
 
   @override
-  State<Map_Page> createState() => _Map_PageState();
+  State<MapPage> createState() => _MapPageState();
 }
 
-class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
+class _MapPageState extends State<MapPage> with WidgetsBindingObserver {
   final ScrollController controller = ScrollController();
-  final BusInfo _BusInfo = BusInfo();
+  final BusInfo _busInfo = BusInfo();
   String? selectedMRT;
   int? selectedTripNo;
   String? selectedBusStop;
-  int BusStop_Index = 8;
-  final int CLE_TripNo = 4;
-  final int KAP_TripNo = 13;
-  String? BookingID;
-  List<String> BusStops = [];
+  int busStopIndex = 8;
+  final int tripNoCLE = 4;
+  final int tripNoKAP = 13;
+  String? bookingID;
+  List<String> busStops = [];
   int? trackBooking;
   late Timer _timer;
-  Timer? _clocktimer;
+  Timer? _clockTimer;
   int? totalBooking;
-  bool loading_totalcount = true;
-  bool loading_count = true;
-  int full_capacity = 30;
-  List<DateTime> KAP_AT = [];
-  List<DateTime> CLE_AT = [];
+  bool loadingTotalCount = true;
+  bool loadingCount = true;
+  int fullCapacity = 30;
+  List<DateTime> arrivalTimeKAP = [];
+  List<DateTime> arrivalTimeCLE = [];
   DateTime now = DateTime.now();
   Duration timeUpdateInterval = Duration(seconds: 1);
   Duration apiFetchInterval = Duration(minutes: 1);
@@ -48,11 +49,11 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
-    BusStops = _BusInfo.BusStop;
-    BusStops = BusStops.sublist(2); //sublist used to start from index 2
-    selectedBusStop = BusStops[BusStop_Index];
-    KAP_AT = _BusInfo.KAPDepartureTime;
-    CLE_AT = _BusInfo.CLEDepartureTime;
+    busStops = _busInfo.busStop;
+    busStops = busStops.sublist(2); //sublist used to start from index 2
+    selectedBusStop = busStops[busStopIndex];
+    arrivalTimeKAP = _busInfo.departureTimeKAP;
+    arrivalTimeCLE = _busInfo.departureTimeCLE;
     _configureAmplify();
 
     _timer = Timer.periodic(Duration(milliseconds: 500), (timer) {
@@ -61,7 +62,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     });
 
     getTime().then((_) {
-      _clocktimer = Timer.periodic(timeUpdateInterval, (timer) {
+      _clockTimer = Timer.periodic(timeUpdateInterval, (timer) {
         updateTimeManually();
         secondsElapsed += timeUpdateInterval.inSeconds;
 
@@ -77,7 +78,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
   void dispose() {
     WidgetsBinding.instance.removeObserver(this);
     _timer.cancel();
-    _clocktimer?.cancel();
+    _clockTimer?.cancel();
     super.dispose();
   }
 
@@ -156,14 +157,14 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
         selectedMRT != null) {
       if (selectedMRT == 'CLE') {
         trackBooking =
-            await getcountCLE(selectedTripNo!, selectedBusStop!) ?? 0;
+            await getCountCLE(selectedTripNo!, selectedBusStop!) ?? 0;
       } else {
         trackBooking =
-            await getcountKAP(selectedTripNo!, selectedBusStop!) ?? 0;
+            await getCountKAP(selectedTripNo!, selectedBusStop!) ?? 0;
       }
       setState(() {
         trackBooking = trackBooking;
-        loading_count = false;
+        loadingCount = false;
       });
     }
   }
@@ -174,7 +175,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     }
     setState(() {
       totalBooking = totalBooking;
-      loading_totalcount = false;
+      loadingTotalCount = false;
     });
   }
 
@@ -189,16 +190,18 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     Amplify.addPlugin(amplifyApi);
     Amplify.configure(amplifyconfig);
 
-    print('Amplify configured');
+    if (kDebugMode) {
+      print('Amplify configured');
+    }
   }
 
-  Future<void> create(String _MRTStation, int _TripNo, String _BusStop) async {
+  Future<void> create(String mrtStation, int tripNo, String busStop) async {
     try {
       final model = BOOKINGDETAILS5(
         id: Uuid().v4(),
-        MRTStation: _MRTStation,
-        TripNo: _TripNo,
-        BusStop: _BusStop,
+        MRTStation: mrtStation,
+        TripNo: tripNo,
+        BusStop: busStop,
       );
 
       final request = ModelMutations.create(model);
@@ -212,15 +215,15 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
 
       String id = createdBOOKINGDETAILS5.id;
       setState(() {
-        BookingID = id;
+        bookingID = id;
       });
-      safePrint('Mutation result: $BookingID');
+      safePrint('Mutation result: $bookingID');
 
       // Ensure count update happens only after the booking creation is confirmed
-      if (_MRTStation == 'KAP') {
-        await countKAP(_TripNo, _BusStop);
+      if (mrtStation == 'KAP') {
+        await countKAP(tripNo, busStop);
       } else {
-        await countCLE(_TripNo, _BusStop);
+        await countCLE(tripNo, busStop);
       }
     } on ApiException catch (e) {
       safePrint('Mutation failed: $e');
@@ -230,26 +233,26 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
   Future<BOOKINGDETAILS5?> readByID() async {
     final request = ModelQueries.list(
       BOOKINGDETAILS5.classType,
-      where: BOOKINGDETAILS5.ID.eq(BookingID),
+      where: BOOKINGDETAILS5.ID.eq(bookingID),
     );
     final response = await Amplify.API.query(request: request).response;
     final data = response.data?.items.firstOrNull;
     return data;
   }
 
-  Future<BOOKINGDETAILS5?> Search_Instance(
-    String MRT,
-    int TripNo,
-    String BusStop,
+  Future<BOOKINGDETAILS5?> searchInstance(
+    String mrt,
+    int tripNo,
+    String busStop,
   ) async {
     final request = ModelQueries.list(
       BOOKINGDETAILS5.classType,
       where: (BOOKINGDETAILS5.MRTSTATION
-          .eq(MRT)
+          .eq(mrt)
           .and(
             BOOKINGDETAILS5.TRIPNO
-                .eq(TripNo)
-                .and(BOOKINGDETAILS5.BUSSTOP.eq(BusStop)),
+                .eq(tripNo)
+                .and(BOOKINGDETAILS5.BUSSTOP.eq(busStop)),
           )),
     );
     final response = await Amplify.API.query(request: request).response;
@@ -257,48 +260,57 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     return data;
   }
 
-  Future<int?> countBooking(String MRT, int TripNo) async {
+  Future<int?> countBooking(String mrt, int tripNo) async {
     int? count;
     try {
       final request = ModelQueries.list(
         BOOKINGDETAILS5.classType,
         where: BOOKINGDETAILS5.MRTSTATION
-            .eq(MRT)
-            .and(BOOKINGDETAILS5.TRIPNO.eq(TripNo)),
+            .eq(mrt)
+            .and(BOOKINGDETAILS5.TRIPNO.eq(tripNo)),
       );
       final response = await Amplify.API.query(request: request).response;
       final data = response.data?.items;
 
       if (data != null) {
         count = data.length;
-        print('$count');
-      } else
+        if (kDebugMode) {
+          print('$count');
+        }
+      } else {
         count = 0;
+      }
     } catch (e) {
-      print('$e');
+      if (kDebugMode) {
+        print('$e');
+      }
     }
     return count;
   }
 
-  Future<void> Minus(String _MRT, int _TripNo, String _BusStop) async {
-    final BOOKINGDETAILS5? bookingToDelete = await Search_Instance(
-      _MRT,
-      _TripNo,
-      _BusStop,
+  Future<void> minus(String mrt, int tripNo, String busStop) async {
+    final BOOKINGDETAILS5? bookingToDelete = await searchInstance(
+      mrt,
+      tripNo,
+      busStop,
     );
     if (bookingToDelete != null) {
       final request = ModelMutations.delete(bookingToDelete);
       final response = await Amplify.API.mutate(request: request).response;
-      if (bookingToDelete.MRTStation == 'KAP')
+
+      if (bookingToDelete.MRTStation == 'KAP') {
         countKAP(bookingToDelete.TripNo, bookingToDelete.BusStop);
-      else
+      } else {
         countCLE(bookingToDelete.TripNo, bookingToDelete.BusStop);
+      }
     } else {
-      print('No booking deleted');
+      if (kDebugMode) {
+        print('No booking deleted');
+      }
     }
   }
 
-  Future<int?> getcountCLE(int _TripNo, String _BusStop) async {
+  Future<int?> getCountCLE(int tripNo, String busStop) async {
     int? count;
     try {
       final request = ModelQueries.list(
@@ -307,8 +319,8 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
             .eq('CLE')
             .and(
               BOOKINGDETAILS5.TRIPNO
-                  .eq(_TripNo)
-                  .and(BOOKINGDETAILS5.BUSSTOP.eq(_BusStop)),
+                  .eq(tripNo)
+                  .and(BOOKINGDETAILS5.BUSSTOP.eq(busStop)),
             ),
       );
       final response = await Amplify.API.query(request: request).response;
@@ -316,28 +328,34 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
 
       if (data != null) {
         count = data.length;
-        print('$count');
+        if (kDebugMode) {
+          print('$count');
+        }
       } else {
         count = 0;
       }
     } catch (e) {
-      print('$e');
+      if (kDebugMode) {
+        print('$e');
+      }
     }
     return count;
   }
 
-  Future<int?> countCLE(int _TripNo, String _BusStop) async {
+  Future<int?> countCLE(int tripNo, String busStop) async {
     int? count;
     // Read if there is a row
     final request1 = ModelQueries.list(
       CLEAfternoon.classType,
       where: CLEAfternoon.TRIPNO
-          .eq(_TripNo)
-          .and(CLEAfternoon.BUSSTOP.eq(_BusStop)),
+          .eq(tripNo)
+          .and(CLEAfternoon.BUSSTOP.eq(busStop)),
     );
     final response1 = await Amplify.API.query(request: request1).response;
     final data1 = response1.data?.items.firstOrNull;
-    print('Row found');
+    if (kDebugMode) {
+      print('Row found');
+    }
 
     // If data1 != null, delete that row
     if (data1 != null) {
@@ -350,14 +368,16 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
       BOOKINGDETAILS5.classType,
       where: BOOKINGDETAILS5.MRTSTATION
           .eq('CLE')
-          .and(BOOKINGDETAILS5.TRIPNO.eq(_TripNo))
-          .and(BOOKINGDETAILS5.BUSSTOP.eq(_BusStop)),
+          .and(BOOKINGDETAILS5.TRIPNO.eq(tripNo))
+          .and(BOOKINGDETAILS5.BUSSTOP.eq(busStop)),
     );
     final response3 = await Amplify.API.query(request: request3).response;
     final data2 = response3.data?.items;
     if (data2 != null) {
       count = data2.length;
-      print('$count');
+      if (kDebugMode) {
+        print('$count');
+      }
     } else {
       count = 0;
     }
@@ -365,8 +385,8 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     // If count is greater than 0, create the row
     if (count > 0) {
       final model = CLEAfternoon(
-        BusStop: _BusStop,
-        TripNo: _TripNo,
+        BusStop: busStop,
+        TripNo: tripNo,
         Count: count,
       );
       final request4 = ModelMutations.create(model);
@@ -377,7 +397,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     return count;
   }
 
-  Future<int?> getcountKAP(int _TripNo, String _BusStop) async {
+  Future<int?> getCountKAP(int tripNo, String busStop) async {
     int? count;
     try {
       final request = ModelQueries.list(
@@ -386,8 +406,8 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
             .eq('KAP')
             .and(
               BOOKINGDETAILS5.TRIPNO
-                  .eq(_TripNo)
-                  .and(BOOKINGDETAILS5.BUSSTOP.eq(_BusStop)),
+                  .eq(tripNo)
+                  .and(BOOKINGDETAILS5.BUSSTOP.eq(busStop)),
             ),
       );
       final response = await Amplify.API.query(request: request).response;
@@ -395,28 +415,34 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
 
       if (data != null) {
         count = data.length;
-        print('$count');
+        if (kDebugMode) {
+          print('$count');
+        }
       } else {
         count = 0;
       }
     } catch (e) {
-      print('$e');
+      if (kDebugMode) {
+        print('$e');
+      }
     }
     return count;
   }
 
-  Future<int?> countKAP(int _TripNo, String _BusStop) async {
+  Future<int?> countKAP(int tripNo, String busStop) async {
     int? count;
     // Read if there is a row
     final request1 = ModelQueries.list(
       KAPAfternoon.classType,
       where: KAPAfternoon.TRIPNO
-          .eq(_TripNo)
-          .and(KAPAfternoon.BUSSTOP.eq(_BusStop)),
+          .eq(tripNo)
+          .and(KAPAfternoon.BUSSTOP.eq(busStop)),
     );
     final response1 = await Amplify.API.query(request: request1).response;
     final data1 = response1.data?.items.firstOrNull;
-    print('Row found');
+    if (kDebugMode) {
+      print('Row found');
+    }
 
     // If data1 != null, delete that row
     if (data1 != null) {
@@ -429,30 +455,35 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
       BOOKINGDETAILS5.classType,
       where: BOOKINGDETAILS5.MRTSTATION
           .eq('KAP')
-          .and(BOOKINGDETAILS5.TRIPNO.eq(_TripNo))
-          .and(BOOKINGDETAILS5.BUSSTOP.eq(_BusStop)),
+          .and(BOOKINGDETAILS5.TRIPNO.eq(tripNo))
+          .and(BOOKINGDETAILS5.BUSSTOP.eq(busStop)),
     );
     final response3 = await Amplify.API.query(request: request3).response;
     final data2 = response3.data?.items;
     if (data2 != null) {
       count = data2.length;
-      print('$count');
+      if (kDebugMode) {
+        print('$count');
+      }
     } else {
       count = 0;
     }
     // If count is greater than 0, create the row
     if (count > 0) {
       final model = KAPAfternoon(
-        BusStop: _BusStop,
-        TripNo: _TripNo,
+        BusStop: busStop,
+        TripNo: tripNo,
         Count: count,
       );
       final request4 = ModelMutations.create(model);
       final response4 = await Amplify.API.mutate(request: request4).response;
       final createdKAP = response4.data;
     }
-    print("Returning KAP count");
-    print("$count");
+    if (kDebugMode) {
+      print("Returning KAP count");
+
+      print("$count");
+    }
     return count;
   }
 
@@ -474,7 +505,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
   }
 
   List<DropdownMenuItem<String>> _buildBusStopItems() {
-    return BusStops.map((String busStop) {
+    return busStops.map((String busStop) {
       return DropdownMenuItem<String>(
         value: busStop,
         child: Text(
@@ -491,9 +522,9 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
 
   List<DateTime> getDepartureTimes() {
     if (selectedMRT == 'KAP') {
-      return _BusInfo.KAPDepartureTime;
+      return _busInfo.departureTimeKAP;
     } else {
-      return _BusInfo.CLEDepartureTime;
+      return _busInfo.departureTimeCLE;
     }
   }
 
@@ -503,17 +534,25 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
         'https://www.timeapi.io/api/time/current/zone?timeZone=ASIA%2FSINGAPORE',
       );
       // final uri = Uri.parse('https://worldtimeapi.org/api/timezone/Singapore');
-      print("Printing URI");
-      print(uri);
+      if (kDebugMode) {
+        print("Printing URI");
+        print(uri);
+      }
       final response = await get(uri);
-      print("Printing response");
-      print(response);
+      if (kDebugMode) {
+        print("Printing response");
 
+        print(response);
+      }
       // Response response = await get(
       //     Uri.parse('https://worldtimeapi.org/api/timezone/Singapore'));
-      print(response.body);
+      if (kDebugMode) {
+        print(response.body);
+      }
       Map data = jsonDecode(response.body);
-      print(data);
+      if (kDebugMode) {
+        print(data);
+      }
       String datetime =
           data['dateTime']; //timeapi.io uses dateTime not datetime
       //String offset = data['utc_offset'].substring(1, 3);
@@ -521,22 +560,26 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
       setState(() {
         now = DateTime.parse(datetime);
         //now = now.add(Duration(hours: int.parse(offset)));
-        print('Printing Time: $now');
+        if (kDebugMode) {
+          print('Printing Time: $now');
+        }
       });
     } catch (e) {
-      print('caught error: $e');
+      if (kDebugMode) {
+        print('caught error: $e');
+      }
     }
   }
 
   void updateTimeManually() {
     if (mounted) {
       setState(() {
-        now = now!.add(timeUpdateInterval);
+        now = now.add(timeUpdateInterval);
       });
     }
   }
 
-  Color? generateColor(List<DateTime> DT, int selectedTripNo) {
+  Color? generateColor(List<DateTime> dt, int selectedTripNo) {
     List<Color?> colors = [
       Colors.red[100],
       Colors.yellow[200],
@@ -550,7 +593,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
       Colors.limeAccent[100],
     ];
 
-    DateTime departureTime = DT[selectedTripNo - 1];
+    DateTime departureTime = dt[selectedTripNo - 1];
     int departureSeconds =
         departureTime.hour * 3600 + departureTime.minute * 60;
     int combinedSeconds = now.second + departureSeconds;
@@ -569,11 +612,11 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     return colors[syncedRandomNum];
   }
 
-  Widget DrawLine() {
+  Widget drawLine() {
     return Column(
       // Use Row here
       children: [
-        DrawWidth(0.025),
+        drawWidth(0.025),
         Container(
           width: MediaQuery.of(context).size.width * 0.95,
           height: 2,
@@ -583,13 +626,13 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     );
   }
 
-  Widget AddTitle(String title, double fontsize) {
+  Widget addTitle(String title, double fontSize) {
     return Align(
       alignment: Alignment.center,
       child: Text(
-        '$title',
+        title,
         style: TextStyle(
-          fontSize: fontsize,
+          fontSize: fontSize,
           fontWeight: FontWeight.bold,
           fontFamily: 'Timmana',
         ),
@@ -597,11 +640,11 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     );
   }
 
-  Widget DrawWidth(double size) {
+  Widget drawWidth(double size) {
     return SizedBox(width: MediaQuery.of(context).size.width * size);
   }
 
-  Widget DrawHeight(double size) {
+  Widget drawHeight(double size) {
     return SizedBox(width: MediaQuery.of(context).size.height * size);
   }
 
@@ -618,11 +661,11 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
     return '$hour:$minute:$sec';
   }
 
-  Widget NormalText(String text, double fontsize) {
+  Widget normalText(String text, double sizeOfFont) {
     return Text(
-      '$text',
+      text,
       style: TextStyle(
-        fontSize: fontsize,
+        fontSize: sizeOfFont,
         fontWeight: FontWeight.w300,
         fontFamily: 'NewAmsterdam',
       ),
@@ -631,28 +674,31 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    print("TrackBooking & TotalBooking");
-    print("$trackBooking");
-    print("$totalBooking");
+    if (kDebugMode) {
+      print("TrackBooking & TotalBooking");
+      print("$trackBooking");
+
+      print("$totalBooking");
+    }
     return Scaffold(
       body: SingleChildScrollView(
         child: Stack(
           children: [
             Container(
-              color: (getDepartureTimes() != null && selectedTripNo != null)
+              color: (selectedTripNo != null)
                   ? generateColor(getDepartureTimes(), selectedTripNo!)
                   : Colors.lightBlue[100],
               child: Column(
                 children: [
                   SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                  AddTitle(
-                    'MooBus Saftey Operator',
+                  addTitle(
+                    'MooBus Safety Operator',
                     MediaQuery.of(context).size.width * 0.1,
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      AddTitle(
+                      addTitle(
                         'Tracking',
                         MediaQuery.of(context).size.width * 0.1,
                       ),
@@ -668,16 +714,16 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                     ],
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                  DrawLine(),
+                  drawLine(),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                  AddTitle(
+                  addTitle(
                     'Selected Route',
                     MediaQuery.of(context).size.width * 0.08,
                   ),
                   Row(
                     children: [
-                      DrawWidth(0.2),
-                      NormalText(
+                      drawWidth(0.2),
+                      normalText(
                         'CAMPUS   --   ',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
@@ -712,17 +758,17 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                       ),
                     ],
                   ),
-                  DrawLine(),
+                  drawLine(),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   Row(
                     children: [
-                      DrawWidth(0.1),
-                      NormalText(
+                      drawWidth(0.1),
+                      normalText(
                         'TRIP NUMBER',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
-                      DrawWidth(0.1),
-                      NormalText(
+                      drawWidth(0.1),
+                      normalText(
                         'DEPARTURE TIME',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
@@ -730,7 +776,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                   ),
                   Row(
                     children: [
-                      DrawWidth(0.25),
+                      drawWidth(0.25),
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.2,
                         height:
@@ -740,11 +786,11 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                           value: selectedTripNo,
                           items: selectedMRT == 'CLE'
                               ? _buildTripNoItems(
-                                  _BusInfo.CLEDepartureTime.length,
+                                  _busInfo.departureTimeCLE.length,
                                 )
                               : selectedMRT == 'KAP'
                               ? _buildTripNoItems(
-                                  _BusInfo.KAPDepartureTime.length,
+                                  _busInfo.departureTimeKAP.length,
                                 )
                               : [],
                           onChanged: (int? newValue) {
@@ -754,12 +800,12 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                           },
                         ),
                       ),
-                      DrawWidth(0.1),
+                      drawWidth(0.1),
                       if (selectedMRT != null && selectedTripNo != null)
                         Text(
                           selectedMRT == 'CLE'
-                              ? '${formatTime(CLE_AT[selectedTripNo! - 1])}'
-                              : '${formatTime(KAP_AT[selectedTripNo! - 1])}',
+                              ? formatTime(arrivalTimeCLE[selectedTripNo! - 1])
+                              : formatTime(arrivalTimeKAP[selectedTripNo! - 1]),
                           style: TextStyle(
                             fontSize: MediaQuery.of(context).size.width * 0.06,
                             fontWeight: FontWeight.w300,
@@ -769,11 +815,11 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                     ],
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                  DrawLine(),
+                  drawLine(),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                   Column(
                     children: [
-                      AddTitle(
+                      addTitle(
                         'Arriving Bus Stop Info',
                         MediaQuery.of(context).size.width * 0.08,
                       ),
@@ -783,7 +829,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                   Row(
                     children: [
                       SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-                      NormalText(
+                      normalText(
                         'Bus Stop:   ',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
@@ -796,10 +842,10 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                             IconButton(
                               onPressed: () {
                                 setState(() {
-                                  BusStop_Index = (BusStop_Index - 1) < 0
-                                      ? BusStops.length - 1
-                                      : BusStop_Index - 1;
-                                  selectedBusStop = BusStops[BusStop_Index];
+                                  busStopIndex = (busStopIndex - 1) < 0
+                                      ? busStops.length - 1
+                                      : busStopIndex - 1;
+                                  selectedBusStop = busStops[busStopIndex];
                                 });
                               },
                               icon: Icon(Icons.arrow_back_ios, size: 15),
@@ -811,16 +857,16 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                               onChanged: (String? newValue) {
                                 setState(() {
                                   selectedBusStop = newValue;
-                                  BusStop_Index = BusStops.indexOf(newValue!);
+                                  busStopIndex = busStops.indexOf(newValue!);
                                 });
                               },
                             ),
                             IconButton(
                               onPressed: () {
                                 setState(() {
-                                  BusStop_Index =
-                                      (BusStop_Index + 1) % BusStops.length;
-                                  selectedBusStop = BusStops[BusStop_Index];
+                                  busStopIndex =
+                                      (busStopIndex + 1) % busStops.length;
+                                  selectedBusStop = busStops[busStopIndex];
                                 });
                               },
                               icon: Icon(Icons.arrow_forward_ios, size: 15),
@@ -834,7 +880,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                   Row(
                     children: [
                       SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-                      NormalText(
+                      normalText(
                         'Total booking for this trip: ',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
@@ -846,7 +892,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                           children: [
                             SizedBox(width: 10),
                             Text(
-                              "${totalBooking != null ? totalBooking : 0}",
+                              "${totalBooking ?? 0}",
                               style: TextStyle(
                                 fontSize:
                                     MediaQuery.of(context).size.width * 0.07,
@@ -863,7 +909,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                   Row(
                     children: [
                       SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-                      NormalText(
+                      normalText(
                         'Booking for this stop:   ',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
@@ -875,7 +921,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                           children: [
                             SizedBox(width: 10),
                             Text(
-                              "${trackBooking != null ? trackBooking : 0}",
+                              "${trackBooking ?? 0}",
                               style: TextStyle(
                                 fontSize:
                                     MediaQuery.of(context).size.width * 0.07,
@@ -892,7 +938,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                   Row(
                     children: [
                       SizedBox(width: MediaQuery.of(context).size.width * 0.02),
-                      NormalText(
+                      normalText(
                         'Vacancy:   ',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
@@ -907,7 +953,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                               selectedMRT != null &&
                                       selectedTripNo != null &&
                                       selectedBusStop != null
-                                  ? "${full_capacity - (totalBooking != null ? totalBooking! : 0)}"
+                                  ? "${fullCapacity - (totalBooking != null ? totalBooking! : 0)}"
                                   : '-',
                               style: TextStyle(
                                 fontSize:
@@ -930,7 +976,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                           if (selectedMRT != null &&
                               selectedTripNo != null &&
                               selectedBusStop != null &&
-                              totalBooking! < full_capacity) {
+                              totalBooking! < fullCapacity) {
                             create(
                               selectedMRT!,
                               selectedTripNo!,
@@ -940,7 +986,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                               selectedTripNo == null ||
                               selectedBusStop == null) {
                             showAlertDialog(context);
-                          } else if (totalBooking! >= full_capacity) {
+                          } else if (totalBooking! >= fullCapacity) {
                             fullAlertDialog(context);
                           }
                         },
@@ -964,7 +1010,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                           if (selectedMRT != null &&
                               selectedTripNo != null &&
                               selectedBusStop != null) {
-                            Minus(
+                            minus(
                               selectedMRT!,
                               selectedTripNo!,
                               selectedBusStop!,
@@ -999,7 +1045,7 @@ class _Map_PageState extends State<Map_Page> with WidgetsBindingObserver {
                     children: [
                       SizedBox(width: MediaQuery.of(context).size.width * 0.55),
                       Text(
-                        '${formatTimesecond(now)}',
+                        formatTimesecond(now),
                         style: TextStyle(
                           fontFamily: 'Tomorrow',
                           fontSize: MediaQuery.of(context).size.width * 0.1,

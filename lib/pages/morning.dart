@@ -6,35 +6,35 @@ import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:driver_10_updated/amplifyconfiguration.dart';
 import 'package:driver_10_updated/main.dart';
-import 'package:driver_10_updated/models/ModelProvider.dart';
-import 'package:driver_10_updated/pages/busdata.dart';
+import 'package:driver_10_updated/models/model_provider.dart';
+import 'package:driver_10_updated/pages/bus_data.dart';
 import 'package:driver_10_updated/pages/map_page.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:uuid/uuid.dart';
 
-class Morning_Page extends StatefulWidget {
-  const Morning_Page({super.key});
+class MorningPage extends StatefulWidget {
+  const MorningPage({super.key});
 
   @override
-  State<Morning_Page> createState() => _Morning_PageState();
+  State<MorningPage> createState() => _MorningPageState();
 }
 
-class _Morning_PageState extends State<Morning_Page>
-    with WidgetsBindingObserver {
+class _MorningPageState extends State<MorningPage> with WidgetsBindingObserver {
   final ScrollController controller = ScrollController();
-  final BusInfo _BusInfo = BusInfo();
+  final BusInfo busInfo = BusInfo();
   String? selectedMRT;
   int? selectedTripNo;
   String? selectedBusStop;
-  int BusStop_Index = 8;
-  final int CLE_TripNo = 1;
-  final int KAP_TripNo = 1;
-  List<String> BusStops = [];
+  int busStopIndex = 8;
+  final int tripNoCLE = 1;
+  final int tripNoKAP = 1;
+  List<String> busStops = [];
   late Timer _timer;
-  Timer? _clocktimer;
-  List<DateTime> KAP_DT = [];
-  List<DateTime> CLE_DT = [];
+  Timer? _clockTimer;
+  List<DateTime> dateTimeKAP = [];
+  List<DateTime> dateTimeCLE = [];
   DateTime now = DateTime.now();
   Duration timeUpdateInterval = Duration(seconds: 1);
   Duration apiFetchInterval = Duration(minutes: 1);
@@ -48,15 +48,17 @@ class _Morning_PageState extends State<Morning_Page>
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _configureAmplify();
-    BusStops = _BusInfo.BusStop;
-    BusStops = BusStops.sublist(2); //sublist used to start from index 2
-    selectedBusStop = BusStops[BusStop_Index];
-    KAP_DT = _BusInfo.KAPArrivalTime;
-    print(KAP_DT);
-    CLE_DT = _BusInfo.CLEArrivalTime;
+    busStops = busInfo.busStop;
+    busStops = busStops.sublist(2); //sublist used to start from index 2
+    selectedBusStop = busStops[busStopIndex];
+    dateTimeKAP = busInfo.arrivalTimeKAP;
+    if (kDebugMode) {
+      print(dateTimeKAP);
+    }
+    dateTimeCLE = busInfo.arrivalTimeCLE;
 
     getTime().then((_) {
-      _clocktimer = Timer.periodic(timeUpdateInterval, (timer) {
+      _clockTimer = Timer.periodic(timeUpdateInterval, (timer) {
         updateTimeManually();
         secondsElapsed += timeUpdateInterval.inSeconds;
 
@@ -79,22 +81,24 @@ class _Morning_PageState extends State<Morning_Page>
     Amplify.addPlugin(amplifyApi);
     Amplify.configure(amplifyconfig);
 
-    print('Amplify configured');
+    if (kDebugMode) {
+      print('Amplify configured');
+    }
   }
 
   Future<void> create(
-    String _MRTStation,
-    int _TripNo,
-    String _BusStop,
-    int _Count,
+    String mrtStation,
+    int tripNo,
+    String busStop,
+    int count,
   ) async {
     try {
-      if (_MRTStation == 'KAP') {
+      if (mrtStation == 'KAP') {
         final model = KAPMorning(
           id: Uuid().v4(),
-          TripNo: _TripNo,
-          BusStop: _BusStop,
-          Count: _Count,
+          TripNo: tripNo,
+          BusStop: busStop,
+          Count: count,
         );
 
         final request = ModelMutations.create(model);
@@ -108,9 +112,9 @@ class _Morning_PageState extends State<Morning_Page>
       } else {
         final model = CLEMorning(
           id: Uuid().v4(),
-          TripNo: _TripNo,
-          BusStop: _BusStop,
-          Count: _Count,
+          TripNo: tripNo,
+          BusStop: busStop,
+          Count: count,
         );
 
         final request = ModelMutations.create(model);
@@ -157,7 +161,7 @@ class _Morning_PageState extends State<Morning_Page>
     );
   }
 
-  void _showConfirmationDialog(MRT, TripNo, BusStop) {
+  void _showConfirmationDialog(mrt, tripNo, busStop) {
     showDialog(
       context: context,
       builder: (BuildContext context) {
@@ -176,7 +180,7 @@ class _Morning_PageState extends State<Morning_Page>
                 setState(() {
                   _selection = true;
                 });
-                create(MRT, TripNo, BusStop, count);
+                create(mrt, tripNo, busStop, count);
                 Navigator.of(context).pop(); // Close dialog
               },
               child: Text('OK'),
@@ -196,9 +200,9 @@ class _Morning_PageState extends State<Morning_Page>
     }
   }
 
-  void passengerCount(int _count) {
+  void passengerCount(int count) {
     setState(() {
-      count = _count;
+      count = count;
     });
   }
 
@@ -242,7 +246,7 @@ class _Morning_PageState extends State<Morning_Page>
   }
 
   List<DropdownMenuItem<String>> _buildBusStopItems() {
-    return BusStops.map((String busStop) {
+    return busStops.map((String busStop) {
       return DropdownMenuItem<String>(
         value: busStop,
         child: Text(
@@ -259,17 +263,17 @@ class _Morning_PageState extends State<Morning_Page>
 
   List<DateTime> getDepartureTimes() {
     if (selectedMRT == 'KAP') {
-      return _BusInfo.KAPArrivalTime;
+      return busInfo.arrivalTimeKAP;
     } else {
-      return _BusInfo.CLEArrivalTime;
+      return busInfo.arrivalTimeCLE;
     }
   }
 
-  Widget DrawLine() {
+  Widget drawLine() {
     return Column(
       // Use Row here
       children: [
-        DrawWidth(0.025),
+        drawWidth(0.025),
         Container(
           width: MediaQuery.of(context).size.width * 0.95,
           height: 2,
@@ -279,13 +283,13 @@ class _Morning_PageState extends State<Morning_Page>
     );
   }
 
-  Widget AddTitle(String title, double fontsize) {
+  Widget addTitle(String title, double sizeOfFont) {
     return Align(
       alignment: Alignment.center,
       child: Text(
-        '$title',
+        title,
         style: TextStyle(
-          fontSize: fontsize,
+          fontSize: sizeOfFont,
           fontWeight: FontWeight.bold,
           fontFamily: 'Timmana',
         ),
@@ -306,18 +310,18 @@ class _Morning_PageState extends State<Morning_Page>
     return '$hour:$minute:$sec';
   }
 
-  Widget NormalText(String text, double fontsize) {
+  Widget normalText(String text, double sizeOfFont) {
     return Text(
-      '$text',
+      text,
       style: TextStyle(
-        fontSize: fontsize,
+        fontSize: sizeOfFont,
         fontWeight: FontWeight.w300,
         fontFamily: 'NewAmsterdam',
       ),
     );
   }
 
-  Widget DrawWidth(double size) {
+  Widget drawWidth(double size) {
     return SizedBox(width: MediaQuery.of(context).size.width * size);
   }
 
@@ -327,17 +331,28 @@ class _Morning_PageState extends State<Morning_Page>
         'https://www.timeapi.io/api/time/current/zone?timeZone=ASIA%2FSINGAPORE',
       );
       // final uri = Uri.parse('https://worldtimeapi.org/api/timezone/Singapore');
-      print("Printing URI");
-      print(uri);
+      if (kDebugMode) {
+        print("Printing URI");
+
+        print(uri);
+      }
       final response = await get(uri);
-      print("Printing response");
-      print(response);
+      if (kDebugMode) {
+        print("Printing response");
+      }
+      if (kDebugMode) {
+        print(response);
+      }
 
       // Response response = await get(
       //     Uri.parse('https://worldtimeapi.org/api/timezone/Singapore'));
-      print(response.body);
+      if (kDebugMode) {
+        print(response.body);
+      }
       Map data = jsonDecode(response.body);
-      print(data);
+      if (kDebugMode) {
+        print(data);
+      }
       String datetime =
           data['dateTime']; //timeapi.io uses dateTime not datetime
       //String offset = data['utc_offset'].substring(1, 3);
@@ -345,10 +360,14 @@ class _Morning_PageState extends State<Morning_Page>
       setState(() {
         now = DateTime.parse(datetime);
         //now = now.add(Duration(hours: int.parse(offset)));
-        print('Printing Time: $now');
+        if (kDebugMode) {
+          print('Printing Time: $now');
+        }
       });
     } catch (e) {
-      print('caught error: $e');
+      if (kDebugMode) {
+        print('caught error: $e');
+      }
     }
   }
 
@@ -380,7 +399,7 @@ class _Morning_PageState extends State<Morning_Page>
 
   void updateTimeManually() {
     setState(() {
-      now = now!.add(timeUpdateInterval);
+      now = now.add(timeUpdateInterval);
     });
   }
 
@@ -391,7 +410,7 @@ class _Morning_PageState extends State<Morning_Page>
       Future.delayed(Duration.zero, () {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => Map_Page()),
+          MaterialPageRoute(builder: (context) => MapPage()),
         );
       });
     }
@@ -404,14 +423,14 @@ class _Morning_PageState extends State<Morning_Page>
               child: Column(
                 children: [
                   SizedBox(height: MediaQuery.of(context).size.height * 0.05),
-                  AddTitle(
-                    'MooBus Saftey Operator',
+                  addTitle(
+                    'MooBus Safety Operator',
                     MediaQuery.of(context).size.width * 0.1,
                   ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                     children: [
-                      AddTitle(
+                      addTitle(
                         'Tracking',
                         MediaQuery.of(context).size.width * 0.1,
                       ),
@@ -427,15 +446,15 @@ class _Morning_PageState extends State<Morning_Page>
                     ],
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                  DrawLine(),
+                  drawLine(),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
-                  AddTitle(
+                  addTitle(
                     'Selected Route',
                     MediaQuery.of(context).size.width * 0.08,
                   ),
                   Row(
                     children: [
-                      DrawWidth(0.2),
+                      drawWidth(0.2),
                       SizedBox(
                         width: 100, // Fixed width for consistency
                         child: _selection
@@ -501,24 +520,24 @@ class _Morning_PageState extends State<Morning_Page>
                                 },
                               ),
                       ),
-                      NormalText(
+                      normalText(
                         '--   CAMPUS',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
                     ],
                   ),
 
-                  DrawLine(),
+                  drawLine(),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.02),
                   Row(
                     children: [
-                      DrawWidth(0.1),
-                      NormalText(
+                      drawWidth(0.1),
+                      normalText(
                         'TRIP NUMBER',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
-                      DrawWidth(0.1),
-                      NormalText(
+                      drawWidth(0.1),
+                      normalText(
                         'DEPARTURE TIME',
                         MediaQuery.of(context).size.width * 0.07,
                       ),
@@ -526,7 +545,7 @@ class _Morning_PageState extends State<Morning_Page>
                   ),
                   Row(
                     children: [
-                      DrawWidth(0.25),
+                      drawWidth(0.25),
                       SizedBox(
                         width: MediaQuery.of(context).size.width * 0.2,
                         height:
@@ -538,9 +557,9 @@ class _Morning_PageState extends State<Morning_Page>
                                 child: DropdownButton<int>(
                                   value: selectedTripNo,
                                   items: selectedMRT == 'CLE'
-                                      ? _buildTripNoItems(CLE_DT.length)
+                                      ? _buildTripNoItems(dateTimeCLE.length)
                                       : selectedMRT == 'KAP'
-                                      ? _buildTripNoItems(KAP_DT.length)
+                                      ? _buildTripNoItems(dateTimeKAP.length)
                                       : [],
                                   onChanged:
                                       null, // Disable the onChanged function
@@ -549,9 +568,9 @@ class _Morning_PageState extends State<Morning_Page>
                             : DropdownButton<int>(
                                 value: selectedTripNo,
                                 items: selectedMRT == 'CLE'
-                                    ? _buildTripNoItems(CLE_DT.length)
+                                    ? _buildTripNoItems(dateTimeCLE.length)
                                     : selectedMRT == 'KAP'
-                                    ? _buildTripNoItems(KAP_DT.length)
+                                    ? _buildTripNoItems(dateTimeKAP.length)
                                     : [],
                                 onChanged: (int? newValue) {
                                   setState(() {
@@ -560,12 +579,12 @@ class _Morning_PageState extends State<Morning_Page>
                                 },
                               ),
                       ),
-                      DrawWidth(0.1),
+                      drawWidth(0.1),
                       if (selectedMRT != null && selectedTripNo != null)
                         Text(
                           selectedMRT == 'CLE'
-                              ? '${formatTime(CLE_DT[selectedTripNo! - 1])}'
-                              : '${formatTime(KAP_DT[selectedTripNo! - 1])}',
+                              ? formatTime(dateTimeCLE[selectedTripNo! - 1])
+                              : formatTime(dateTimeKAP[selectedTripNo! - 1]),
                           style: TextStyle(
                             fontSize: MediaQuery.of(context).size.width * 0.06,
                             fontWeight: FontWeight.w300,
@@ -576,7 +595,7 @@ class _Morning_PageState extends State<Morning_Page>
                     ],
                   ),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),
-                  DrawLine(),
+                  drawLine(),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.01),
                   SizedBox(height: MediaQuery.of(context).size.height * 0.05),
                   // Inside the build method
@@ -745,7 +764,7 @@ class _Morning_PageState extends State<Morning_Page>
                     child: Padding(
                       padding: const EdgeInsets.fromLTRB(0, 0, 15, 0),
                       child: Text(
-                        '${formatTimesecond(now)}',
+                        formatTimesecond(now),
                         style: TextStyle(
                           fontFamily: 'Tomorrow',
                           fontSize: MediaQuery.of(context).size.width * 0.1,
