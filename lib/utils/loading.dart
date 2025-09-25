@@ -1,3 +1,4 @@
+import 'package:driver_10_updated/utils/text_sizing.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_spinkit/flutter_spinkit.dart';
 
@@ -12,13 +13,13 @@ class _LoadingState extends State<Loading> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-        backgroundColor: Colors.blue[200],
-        body: Center(
-          child: SpinKitSpinningLines(
-            color: Colors.white,
-            size: 80.0,
-          ),
-        )
+      backgroundColor: Colors.white,
+      body: Center(
+        child: SpinKitSpinningLines(
+          color: Colors.grey,
+          size: TextSizing.fontSizeHeading(context) * 5,
+        ),
+      ),
     );
   }
 }
@@ -30,13 +31,13 @@ class LoadingScroll extends StatelessWidget {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        SizedBox(height: 10),
+        SizedBox(height: TextSizing.fontSizeHeading(context)),
         Container(
-          color: Colors.lightBlue[100],
+          color: Colors.white,
           child: Center(
             child: SpinKitWave(
-              color: Colors.white,
-              size: 30.0,
+              color: Colors.grey,
+              size: TextSizing.fontSizeHeading(context) * 3,
             ),
           ),
         ),
@@ -44,4 +45,3 @@ class LoadingScroll extends StatelessWidget {
     );
   }
 }
-

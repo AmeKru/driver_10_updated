@@ -22,13 +22,13 @@
 import 'package:amplify_core/amplify_core.dart' as amplify_core;
 
 import 'BOOKINGDETAILS5.dart';
-import 'CLEAfternoon.dart';
+import 'CLE_afternoon.dart';
 import 'CLE_morning.dart';
 import 'KAP_afternoon.dart';
 import 'KAP_morning.dart';
 
 export 'BOOKINGDETAILS5.dart';
-export 'CLEAfternoon.dart';
+export 'CLE_afternoon.dart';
 export 'CLE_morning.dart';
 export 'KAP_afternoon.dart';
 export 'KAP_morning.dart';

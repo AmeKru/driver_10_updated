@@ -1,9 +1,10 @@
 import 'dart:async'; // To use Timer
 
-import 'package:driver_10_updated/pages/bus_data.dart';
-import 'package:driver_10_updated/pages/loading.dart';
-import 'package:driver_10_updated/pages/map_page.dart';
-import 'package:driver_10_updated/pages/morning.dart';
+import 'package:driver_10_updated/global.dart';
+import 'package:driver_10_updated/pages/afternoon_page.dart';
+import 'package:driver_10_updated/pages/morning_page.dart';
+import 'package:driver_10_updated/utils/bus_data.dart';
+import 'package:driver_10_updated/utils/loading.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -15,10 +16,6 @@ void main() async {
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
-
-  static int screenTimeHour = 13; // 13/1PM 15/3PM to afternoon service
-  static int screenTimeMin = 00;
-
   @override
   MyAppState createState() => MyAppState();
 }
@@ -51,8 +48,7 @@ class MyAppState extends State<MyApp> {
         print('hour: ${now.hour} minute: ${now.minute}');
       }
       _currentRoute =
-          (now.hour >= MyApp.screenTimeHour &&
-              now.minute >= MyApp.screenTimeMin)
+          (now.hour >= screenTimeHour && now.minute >= screenTimeMin)
           ? '/home'
           : '/morning';
     });
@@ -72,7 +68,7 @@ class MyAppState extends State<MyApp> {
       initialRoute: _currentRoute, // Use the dynamic route
       routes: {
         '/': (context) => Loading(),
-        '/home': (context) => MapPage(),
+        '/home': (context) => AfternoonPage(),
         '/morning': (context) => MorningPage(),
       },
     );
