@@ -548,14 +548,14 @@ class _MorningPageState extends State<MorningPage> with WidgetsBindingObserver {
           children: [
             Column(
               children: [
-                SizedBox(height: TextSizing.fontSizeText(context)),
+                SizedBox(height: TextSizing.fontSizeHeading(context)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Text(
                       'Tracking (Morning)',
                       style: TextStyle(
-                        fontSize: TextSizing.fontSizeText(context),
+                        fontSize: TextSizing.fontSizeHeading(context),
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                         fontFamily: 'Roboto',
@@ -564,7 +564,7 @@ class _MorningPageState extends State<MorningPage> with WidgetsBindingObserver {
                   ],
                 ),
 
-                SizedBox(height: TextSizing.fontSizeText(context)),
+                SizedBox(height: TextSizing.fontSizeHeading(context)),
                 drawLine(),
                 SizedBox(height: TextSizing.fontSizeText(context)),
 
@@ -956,7 +956,7 @@ class _MorningPageState extends State<MorningPage> with WidgetsBindingObserver {
                   ],
                 ),
 
-                SizedBox(height: TextSizing.fontSizeHeading(context) * 2),
+                SizedBox(height: TextSizing.fontSizeHeading(context)),
 
                 Align(
                   alignment: Alignment.center,

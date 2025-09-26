@@ -794,14 +794,14 @@ class _AfternoonPageState extends State<AfternoonPage>
           children: [
             Column(
               children: [
-                SizedBox(height: TextSizing.fontSizeText(context)),
+                SizedBox(height: TextSizing.fontSizeHeading(context)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     Text(
                       'Tracking (Afternoon)',
                       style: TextStyle(
-                        fontSize: TextSizing.fontSizeText(context),
+                        fontSize: TextSizing.fontSizeHeading(context),
                         fontWeight: FontWeight.bold,
                         color: Colors.black,
                         fontFamily: 'Roboto',
@@ -810,7 +810,7 @@ class _AfternoonPageState extends State<AfternoonPage>
                   ],
                 ),
 
-                SizedBox(height: TextSizing.fontSizeText(context)),
+                SizedBox(height: TextSizing.fontSizeHeading(context)),
                 drawLine(),
                 SizedBox(height: TextSizing.fontSizeMiniText(context)),
 
