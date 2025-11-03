@@ -678,36 +678,55 @@ class _AfternoonPageState extends State<AfternoonPage>
   // generated colours, will be used as background colour and to check tickets?
 
   Color? generateColor(List<DateTime> dt, int selectedTripNo) {
-    List<Color?> colors = [
+    if (selectedTripNo <= 0 || selectedTripNo > dt.length) return null;
+
+    final List<Color?> colors = [
+      //Colors.red[100],
+      // Colors.yellow[200],
+      // Colors.white,
+      // Colors.tealAccent[100],
+      //  Colors.orangeAccent[200],
+      // Colors.greenAccent[100],
+      // Colors.indigo[100],
+      //  Colors.purpleAccent[100],
+      // Colors.grey[400],
+      //  Colors.limeAccent[100],
       Colors.red[100],
+      Colors.red[200],
+      Colors.orange[200],
+      Colors.orange[100],
       Colors.yellow[200],
-      Colors.white,
-      Colors.tealAccent[100],
-      Colors.orangeAccent[200],
-      Colors.greenAccent[100],
+      Colors.green[200],
+      Colors.blue[200],
       Colors.indigo[100],
-      Colors.purpleAccent[100],
-      Colors.grey[400],
-      Colors.limeAccent[100],
+      Colors.deepPurple[200],
+      Colors.purple[200],
     ];
 
-    DateTime departureTime = dt[selectedTripNo - 1];
-    int departureSeconds =
-        departureTime.hour * 3600 + departureTime.minute * 60;
-    int combinedSeconds = now.second + departureSeconds;
-    int roundedSeconds = (combinedSeconds ~/ 10) * 10;
-    DateTime roundedTime = DateTime(
-      now.year,
-      now.month,
-      now.day,
-      now.hour,
-      now.minute,
-      roundedSeconds,
-    );
-    int seed = roundedTime.millisecondsSinceEpoch ~/ (1000 * 10);
-    Random random = Random(seed);
-    int syncedRandomNum = random.nextInt(10);
-    return colors[syncedRandomNum];
+    final DateTime departureTime = dt[selectedTripNo - 1];
+
+    // Seconds since midnight for both times.
+    final int departureSeconds =
+        departureTime.hour * 3600 +
+        departureTime.minute * 60 +
+        departureTime.second;
+
+    final int nowSeconds = now.hour * 3600 + now.minute * 60 + now.second;
+
+    // Day index: number of days since epoch to ensure day-to-day variation.
+    final int dayIndex =
+        DateTime(now.year, now.month, now.day).millisecondsSinceEpoch ~/
+        (1000 * 60 * 60 * 24);
+
+    // Combine components; bucket by 10 seconds for coarse stability.
+    final int combined =
+        (departureSeconds + nowSeconds + dayIndex) & 0x7fffffff;
+    final int seed = combined ~/ 10;
+
+    final Random random = Random(seed);
+    final int index = random.nextInt(colors.length);
+
+    return colors[index];
   }
 
   ////////////////////////////////////////////////////////////
