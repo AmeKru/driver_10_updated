@@ -67,12 +67,18 @@ class _AfternoonPageState extends State<AfternoonPage>
     });
 
     getTime().then((_) {
-      _clockTimer = Timer.periodic(timeUpdateInterval, (timer) {
+      _clockTimer = Timer.periodic(timeUpdateInterval, (timer) async {
+        if (!mounted) {
+          timer.cancel();
+          return;
+        }
+
+        // Increment local time representation synchronously
         updateTimeManually();
         secondsElapsed += timeUpdateInterval.inSeconds;
 
+        // Every [apiFetchInterval], refresh the time from the API as a fire-and-forget Future.
         if (secondsElapsed >= apiFetchInterval.inSeconds) {
-          getTime();
           secondsElapsed = 0;
         }
       });
@@ -455,46 +461,72 @@ class _AfternoonPageState extends State<AfternoonPage>
   }
 
   Future<void> getTime() async {
+    DateTime? timeNow;
     try {
+      // API endpoint for Singapore time (timeapi.io)
       final uri = Uri.parse(
         'https://www.timeapi.io/api/time/current/zone?timeZone=ASIA%2FSINGAPORE',
       );
+      // Alternative API (commented out):
       // final uri = Uri.parse('https://worldtimeapi.org/api/timezone/Singapore');
-      if (kDebugMode) {
-        print("Printing URI");
-        print(uri);
-      }
+
+      // Make GET request to the API
       final response = await get(uri);
-      if (kDebugMode) {
-        print("Printing response");
 
-        print(response);
-      }
-      // Response response = await get(
-      //     Uri.parse('https://worldtimeapi.org/api/timezone/Singapore'));
       if (kDebugMode) {
-        print(response.body);
+        print("Printing response: $response");
       }
-      Map data = jsonDecode(response.body);
-      if (kDebugMode) {
-        print(data);
-      }
-      String datetime =
-          data['dateTime']; //timeapi.io uses dateTime not datetime
-      //String offset = data['utc_offset'].substring(1, 3);
 
-      setState(() {
-        now = DateTime.parse(datetime);
-        //now = now.add(Duration(hours: int.parse(offset)));
+      // If request was successful
+      if (response.statusCode == 200) {
+        // Decode JSON response into a Map
+        Map<String, dynamic> data = jsonDecode(response.body);
+
+        // Extract the datetime string (timeapi.io uses 'dateTime' key)
+        String datetime = data['dateTime'];
+
+        // Parse the datetime string into a DateTime object
+        timeNow = DateTime.parse(datetime);
+
         if (kDebugMode) {
-          print('Printing Time: $now');
+          print("Updated Time: $timeNow");
         }
-      });
+
+        if (timeNow != null) {
+          setState(() {
+            now = timeNow!;
+          });
+          return;
+        }
+      } else {
+        // If request failed, log the status code
+        if (kDebugMode) {
+          print(
+            "Failed to get time data from the API. Status Code: ${response.statusCode}",
+          );
+        }
+      }
     } catch (e) {
+      // Catch and log any errors during the request or parsing
       if (kDebugMode) {
-        print('caught error: $e');
+        print('Caught error1: $e');
       }
     }
+    // fallback to device local UTC time zone and convert to singapore time zone
+
+    if (kDebugMode) {
+      print('timeNow could not be fetched, falling back to device time');
+    }
+    // Get the current device time
+    DateTime localTime = DateTime.now();
+    // Convert local time to UTC
+    DateTime utcTime = localTime.toUtc();
+
+    setState(() {
+      now = utcTime.add(Duration(hours: 8));
+    });
+
+    return;
   }
 
   void updateTimeManually() {
