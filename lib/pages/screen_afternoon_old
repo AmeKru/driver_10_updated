@@ -5,14 +5,15 @@ import 'dart:math';
 import 'package:amplify_api/amplify_api.dart';
 import 'package:amplify_datastore/amplify_datastore.dart';
 import 'package:amplify_flutter/amplify_flutter.dart';
-import 'package:driver_10_updated/amplifyconfiguration.dart';
-import 'package:driver_10_updated/models/model_provider.dart';
-import 'package:driver_10_updated/utils/bus_data.dart';
-import 'package:driver_10_updated/utils/text_sizing.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart';
 import 'package:uuid/uuid.dart';
+
+import '../amplifyconfiguration.dart';
+import '../models/ModelProvider.dart';
+import '../utils/bus_data.dart';
+import '../utils/text_sizing.dart';
 
 ////////////////////////////////////////////////////////////
 // Afternoon Page
@@ -59,12 +60,6 @@ class _AfternoonPageState extends State<AfternoonPage>
     selectedBusStop = busStops[busStopIndex];
     arrivalTimeKAP = _busInfo.departureTimeKAP;
     arrivalTimeCLE = _busInfo.departureTimeCLE;
-    _configureAmplify();
-
-    _timer = Timer.periodic(Duration(milliseconds: 500), (timer) {
-      _updateTotalBooking();
-      _updateBooking();
-    });
 
     getTime().then((_) {
       _clockTimer = Timer.periodic(timeUpdateInterval, (timer) async {
@@ -101,22 +96,6 @@ class _AfternoonPageState extends State<AfternoonPage>
     if (state == AppLifecycleState.resumed) {
       // The app is resumed; re-fetch the time from the API
       getTime();
-    }
-  }
-
-  void _configureAmplify() async {
-    final provider = ModelProvider();
-    final amplifyApi = AmplifyAPI(
-      options: APIPluginOptions(modelProvider: provider),
-    );
-    final dataStorePlugin = AmplifyDataStore(modelProvider: provider);
-
-    Amplify.addPlugin(dataStorePlugin);
-    Amplify.addPlugin(amplifyApi);
-    Amplify.configure(amplifyconfig);
-
-    if (kDebugMode) {
-      print('Amplify configured');
     }
   }
 
@@ -496,7 +475,8 @@ class _AfternoonPageState extends State<AfternoonPage>
           setState(() {
             now = timeNow!;
           });
-          return;
+
+          ;
         }
       } else {
         // If request failed, log the status code
@@ -804,39 +784,6 @@ class _AfternoonPageState extends State<AfternoonPage>
       print("$totalBooking");
     }
     return Scaffold(
-      appBar: AppBar(
-        toolbarHeight: TextSizing.fontSizeHeading(context) * 1.75,
-        title: Stack(
-          children: [
-            // Centered app title with bus icon
-            Center(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.directions_bus,
-                    color: Colors.white,
-                    size: TextSizing.fontSizeHeading(context),
-                  ),
-                  SizedBox(width: TextSizing.fontSizeMiniText(context) * 0.3),
-                  Text(
-                    'MooBus Safety Operator',
-                    style: TextStyle(
-                      fontFamily: 'Montserrat',
-                      color: Colors.white,
-                      fontSize: TextSizing.fontSizeHeading(context),
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-        automaticallyImplyLeading:
-            false, // Prevents default back arrow or drawer icon
-        backgroundColor: Colors.black, // Custom app bar color
-      ),
       backgroundColor: (selectedTripNo != null)
           ? generateColor(getDepartureTimes(), selectedTripNo!)
           : Colors.white,

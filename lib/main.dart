@@ -1,76 +1,113 @@
-import 'dart:async'; // To use Timer
-
-import 'package:driver_10_updated/global.dart';
-import 'package:driver_10_updated/pages/afternoon_page.dart';
-import 'package:driver_10_updated/pages/morning_page.dart';
-import 'package:driver_10_updated/utils/bus_data.dart';
-import 'package:driver_10_updated/utils/loading.dart';
+//import 'dart:async'; // To use Timer
+import 'package:amplify_api/amplify_api.dart';
+import 'package:amplify_auth_cognito/amplify_auth_cognito.dart';
+import 'package:amplify_datastore/amplify_datastore.dart';
+// Amplify imports
+import 'package:amplify_flutter/amplify_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
-void main() async {
+import '../pages/main_page.dart';
+import '../utils/get_data.dart';
+import '../utils/text_sizing.dart';
+import 'amplifyconfiguration.dart';
+import 'models/ModelProvider.dart';
+
+////////////////////////////////////////////////////////////////////////////////
+// Top-level Amplify configuration helper and readiness future
+Future<void> configureAmplifyOnce() async {
+  try {
+    if (!Amplify.isConfigured) {
+      final provider = ModelProvider();
+
+      // Add DataStore
+      Amplify.addPlugin(AmplifyDataStore(modelProvider: provider));
+
+      // Add API (AppSync)
+      Amplify.addPlugin(
+        AmplifyAPI(options: APIPluginOptions(modelProvider: provider)),
+      );
+
+      // Add Auth (Cognito User Pool + Identity Pool)
+      Amplify.addPlugin(AmplifyAuthCognito());
+
+      // Configure Amplify with amplifyconfiguration.dart
+      await Amplify.configure(amplifyconfig);
+
+      if (kDebugMode) print('Amplify configured');
+      final session =
+          await Amplify.Auth.fetchAuthSession() as CognitoAuthSession;
+      if (kDebugMode) {
+        print('Identity ID: ${session.identityIdResult.value}');
+        print('Access Key: ${session.credentialsResult.value.accessKeyId}');
+      }
+    } else {
+      if (kDebugMode) print('Amplify already configured');
+    }
+  } catch (e, st) {
+    if (kDebugMode) print('Amplify configuration error: $e\n$st');
+    rethrow;
+  }
+}
+
+////////////////////////////////////////////////////////////////////////////////
+// Exposed readiness future other code can await
+
+final Future<void> amplifyReady = configureAmplifyOnce();
+
+////////////////////////////////////////////////////////////////////////////////
+// main function
+
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await BusInfo().loadData();
+
+  // Ensure Amplify configured before the app starts
+  try {
+    await amplifyReady;
+  } catch (e) {
+    if (kDebugMode) print('Amplify failed to configure in main: $e');
+  }
+
+  // load other app data
+  await BusData().loadData();
+
+  await SystemChrome.setPreferredOrientations([
+    DeviceOrientation.portraitUp,
+    DeviceOrientation.portraitDown,
+    DeviceOrientation.landscapeLeft,
+    DeviceOrientation.landscapeRight,
+  ]);
+
   runApp(MyApp());
 }
+
+////////////////////////////////////////////////////////////////////////////////
+// MyApp
 
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
   @override
-  MyAppState createState() => MyAppState();
+  State<MyApp> createState() => _MyAppState();
 }
 
-class MyAppState extends State<MyApp> {
-  late Timer _timer;
-  String _currentRoute = '/'; // Default route
-  DateTime now = DateTime.now();
-
+class _MyAppState extends State<MyApp> {
   @override
   void initState() {
     super.initState();
-    _checkTime();
-
-    // Set a timer that runs every minute
-    _timer = Timer.periodic(Duration(seconds: 10), (timer) {
-      _checkTime();
-    });
-  }
-
-  // Function to check the current time and update the route
-  void _checkTime() {
-    if (kDebugMode) {
-      print('Checking time');
-    }
-    setState(() {
-      DateTime now = DateTime.now();
-
-      if (kDebugMode) {
-        print('hour: ${now.hour} minute: ${now.minute}');
-      }
-      _currentRoute =
-          (now.hour >= screenTimeHour && now.minute >= screenTimeMin)
-          ? '/home'
-          : '/morning';
-    });
-  }
-
-  @override
-  void dispose() {
-    // Cancel the timer when the widget is disposed
-    _timer.cancel();
-    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
+    if (kDebugMode) {
+      print('rebuilt app');
+    }
+    // sets size at start so layout will scale accordingly
+    TextSizing.setSize(context);
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      initialRoute: _currentRoute, // Use the dynamic route
-      routes: {
-        '/': (context) => Loading(),
-        '/home': (context) => AfternoonPage(),
-        '/morning': (context) => MorningPage(),
-      },
+      initialRoute: '/home',
+      routes: {'/home': (context) => MainPage()},
     );
   }
 }
