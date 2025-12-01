@@ -1,0 +1,17 @@
+{
+  "version": 1,
+  "serviceConfiguration": {
+    "apiName": "user14updated",
+    "serviceName": "AppSync",
+    "defaultAuthType": {
+      "mode": "AWS_IAM"
+    },
+    "conflictResolution": {},
+    "additionalAuthTypes": [
+      {
+        "mode": "AMAZON_COGNITO_USER_POOLS",
+        "cognitoUserPoolId": "authuser14updated36572e51"
+      }
+    ]
+  }
+}

@@ -1,0 +1,76 @@
+# This "input" configures a global authorization rule to enable public access to
+# all models in this schema. Learn more about authorization rules here: https://docs.amplify.aws/cli/graphql/authorization-rules
+# input AMPLIFY { globalAuthRule: AuthRule = { allow: public } } # FOR TESTING ONLY!
+
+enum TripTimeOfDay {
+    MORNING
+    AFTERNOON
+}
+
+type BookingDetails @model
+@auth(rules: [
+    # Unauth users (IAM) → full access
+    { allow: public, provider: iam, operations: [read, create, update, delete] },
+    # Auth users (User Pools) → full access
+    { allow: private, provider: userPools, operations: [read, create, update, delete] }
+]) {
+    id: ID!
+    MRTStation: String!
+    TripNo: Int!
+    BusStop: String!
+}
+
+type TripList @model
+@auth(rules: [
+    # Unauth users (IAM) → read only
+    { allow: public, provider: iam, operations: [read] },
+    # Auth users → full access
+    { allow: private, provider: userPools, operations: [read, create, update, delete] }
+]) {
+    id: ID!
+    MRTStation: String! @index(name: "FilterByStationAndTime", sortKeyFields: ["TripTime"])
+    TripTime: TripTimeOfDay!
+    TripNo: Int!
+    DepartureTime: AWSDateTime!
+}
+
+type CountTripList @model
+@auth(rules: [
+    # Unauth users → full access
+    { allow: public, provider: iam, operations: [read, create, update, delete] },
+    # Auth users → full access
+    { allow: private, provider: userPools, operations: [read, create, update, delete] }
+]) {
+    id: ID!
+    MRTStation: String! @index(name: "FilterByStationAndTime", sortKeyFields: ["TripTime"])
+    TripTime: TripTimeOfDay!
+    BusStop: String!
+    TripNo: Int!
+    Count: Int!
+}
+
+type Announcements @model
+@auth(rules: [
+    # Unauth users → read only
+    { allow: public, provider: iam, operations: [read] },
+    # Auth users → full access
+    { allow: private, provider: userPools, operations: [read, create, update, delete] }
+]) {
+    id: ID!
+    Announcement: String!
+}
+
+type BusStops @model
+@auth(rules: [
+    # Unauth users → read only
+    { allow: public, provider: iam, operations: [read] },
+    # Auth users → full access
+    { allow: private, provider: userPools, operations: [read, create, update, delete] }
+]) {
+    id: ID!
+    BusStop: String!
+    StopNo: Int!
+    Lat: Float!
+    Lon: Float!
+    Description: String!
+}
