@@ -158,22 +158,24 @@ class _MorningPageState extends State<MorningPage> with WidgetsBindingObserver {
       final items = existingResponse.data?.items.cast<CountTripList>() ?? [];
 
       // Step 1a: filter by createdAt → only rows created today (Singapore time)
+      // Step 1a: filter by createdAt → only keep rows created today (Singapore time)
       final nowLocal = DateTime.now();
-      final startOfDayLocal = DateTime(
-        nowLocal.year,
-        nowLocal.month,
-        nowLocal.day,
-      );
-      final endOfDayLocal = startOfDayLocal.add(const Duration(days: 1));
+      final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
 
       final todayRows = items.where((row) {
         final createdUtc = row.createdAt?.getDateTimeInUtc();
         if (createdUtc == null) return false;
-        final createdSgt = createdUtc.add(
-          const Duration(hours: 8),
-        ); // UTC → SGT
-        return createdSgt.isAfter(startOfDayLocal) &&
-            createdSgt.isBefore(endOfDayLocal);
+
+        // Convert UTC → local (SGT if device timezone is Singapore)
+        final createdLocal = createdUtc.toLocal();
+        final createdDate = DateTime(
+          createdLocal.year,
+          createdLocal.month,
+          createdLocal.day,
+        );
+
+        // Compare only the date parts
+        return createdDate == todayDate;
       }).toList();
 
       final existingRow = todayRows.isNotEmpty ? todayRows.first : null;

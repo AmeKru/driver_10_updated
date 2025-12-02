@@ -255,21 +255,22 @@ class _AfternoonPageState extends State<AfternoonPage>
 
       // Step 1a: filter by createdAt → only keep rows created today (Singapore time)
       final nowLocal = DateTime.now();
-      final startOfDayLocal = DateTime(
-        nowLocal.year,
-        nowLocal.month,
-        nowLocal.day,
-      );
-      final endOfDayLocal = startOfDayLocal.add(const Duration(days: 1));
+      final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
 
       final todayRows = items.where((row) {
         final createdUtc = row.createdAt?.getDateTimeInUtc();
         if (createdUtc == null) return false;
-        final createdSgt = createdUtc.add(
-          const Duration(hours: 8),
-        ); // UTC → SGT
-        return createdSgt.isAfter(startOfDayLocal) &&
-            createdSgt.isBefore(endOfDayLocal);
+
+        // Convert UTC → local (SGT if device timezone is Singapore)
+        final createdLocal = createdUtc.toLocal();
+        final createdDate = DateTime(
+          createdLocal.year,
+          createdLocal.month,
+          createdLocal.day,
+        );
+
+        // Compare only the date parts
+        return createdDate == todayDate;
       }).toList();
 
       final existingRow = todayRows.isNotEmpty ? todayRows.first : null;
@@ -361,16 +362,10 @@ class _AfternoonPageState extends State<AfternoonPage>
 
       if (items.isEmpty) return 0;
 
-      // Singapore local time boundaries
+      // Singapore local time (system timezone should be set to SGT)
       final nowLocal = DateTime.now();
-      final startOfDayLocal = DateTime(
-        nowLocal.year,
-        nowLocal.month,
-        nowLocal.day,
-      );
-      final endOfDayLocal = startOfDayLocal.add(const Duration(days: 1));
+      final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
 
-      // Filter by createdAt
       final todayItems = items.where((item) {
         final createdStr = item['createdAt'];
         if (createdStr == null) return false;
@@ -378,12 +373,17 @@ class _AfternoonPageState extends State<AfternoonPage>
         final createdUtc = DateTime.tryParse(createdStr);
         if (createdUtc == null) return false;
 
-        // Convert UTC to Singapore local time (+8)
-        final createdSgt = createdUtc.add(const Duration(hours: 8));
+        // Convert UTC → local (SGT if system timezone is Singapore)
+        final createdLocal = createdUtc.toLocal();
+        final createdDate = DateTime(
+          createdLocal.year,
+          createdLocal.month,
+          createdLocal.day,
+        );
 
-        return createdSgt.isAfter(startOfDayLocal) &&
-            createdSgt.isBefore(endOfDayLocal);
-      });
+        // Compare only the date parts
+        return createdDate == todayDate;
+      }).toList();
 
       return todayItems.fold<int>(
         0,
@@ -432,16 +432,10 @@ class _AfternoonPageState extends State<AfternoonPage>
       final items = (jsonDecode(data)['listCountTripLists']['items'] as List);
       if (items.isEmpty) return 0;
 
-      // Singapore local time boundaries
+      // Singapore local time (system timezone should be set to SGT)
       final nowLocal = DateTime.now();
-      final startOfDayLocal = DateTime(
-        nowLocal.year,
-        nowLocal.month,
-        nowLocal.day,
-      );
-      final endOfDayLocal = startOfDayLocal.add(const Duration(days: 1));
+      final todayDate = DateTime(nowLocal.year, nowLocal.month, nowLocal.day);
 
-      // Filter by createdAt
       final todayItems = items.where((item) {
         final createdStr = item['createdAt'];
         if (createdStr == null) return false;
@@ -449,12 +443,17 @@ class _AfternoonPageState extends State<AfternoonPage>
         final createdUtc = DateTime.tryParse(createdStr);
         if (createdUtc == null) return false;
 
-        // Convert UTC to Singapore local time (+8)
-        final createdSgt = createdUtc.add(const Duration(hours: 8));
+        // Convert UTC → local (SGT if system timezone is Singapore)
+        final createdLocal = createdUtc.toLocal();
+        final createdDate = DateTime(
+          createdLocal.year,
+          createdLocal.month,
+          createdLocal.day,
+        );
 
-        return createdSgt.isAfter(startOfDayLocal) &&
-            createdSgt.isBefore(endOfDayLocal);
-      });
+        // Compare only the date parts
+        return createdDate == todayDate;
+      }).toList();
 
       // If you want the **sum** of counts for today:
       return todayItems.fold<int>(
