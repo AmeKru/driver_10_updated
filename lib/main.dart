@@ -21,8 +21,10 @@ Future<void> configureAmplifyOnce() async {
     if (!Amplify.isConfigured) {
       final provider = ModelProvider();
 
-      // Add DataStore
-      Amplify.addPlugin(AmplifyDataStore(modelProvider: provider));
+      // Add DataStore only on mobile/desktop
+      if (!kIsWeb) {
+        Amplify.addPlugin(AmplifyDataStore(modelProvider: provider));
+      }
 
       // Add API (AppSync)
       Amplify.addPlugin(

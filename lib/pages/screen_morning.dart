@@ -290,7 +290,7 @@ class _MorningPageState extends State<MorningPage> with WidgetsBindingObserver {
             ),
           ),
           content: Text(
-            'Please select an MRT Station, Trip Number, and Bus Stop before proceeding.',
+            'Please select an MRT Station and Trip Number before proceeding.',
             textAlign: TextAlign.center,
             softWrap: true,
             style: TextStyle(
