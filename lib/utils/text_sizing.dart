@@ -58,7 +58,19 @@ class TextSizing {
   // function to check for shortest side of device
 
   static double shortestSide(BuildContext context) {
-    return (size.width < size.height ? size.width : size.height) * 2;
+    double smallerSize = 0;
+    double biggerSize = 0;
+
+    if (size.width < size.height) {
+      smallerSize = size.width;
+      biggerSize = size.height;
+    } else {
+      biggerSize = size.width;
+      smallerSize = size.height;
+    }
+
+    return (biggerSize * 0.6 < smallerSize ? biggerSize * 0.6 : smallerSize) *
+        2;
   }
 
   //////////////////////////////////////////////////////////////////////////////
@@ -91,14 +103,14 @@ class TextSizing {
       textFontSize = MediaQuery.of(context).textScaler.scale(textFontSize);
     }
 
-    return textFontSize;
+    return textFontSize * 1.6;
   }
 
   //////////////////////////////////////////////////////////////////////////////
   // Returns a bigger font size based of font size of normal text
 
   static double fontSizeHeading(BuildContext context) {
-    double headingFontSize = fontSizeText(context) * 1.7;
+    double headingFontSize = fontSizeText(context) * 1.3;
     return headingFontSize;
   }
 
