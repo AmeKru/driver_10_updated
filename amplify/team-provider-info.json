@@ -1,22 +1,22 @@
 {
   "dev": {
     "awscloudformation": {
-      "AuthRoleName": "amplify-user14updated-dev-680fc-authRole",
-      "UnauthRoleArn": "arn:aws:iam::643913568880:role/amplify-user14updated-dev-680fc-unauthRole",
-      "AuthRoleArn": "arn:aws:iam::643913568880:role/amplify-user14updated-dev-680fc-authRole",
+      "AuthRoleName": "amplify-moobusapps-dev-7cc68-authRole",
+      "UnauthRoleArn": "arn:aws:iam::506868652945:role/amplify-moobusapps-dev-7cc68-unauthRole",
+      "AuthRoleArn": "arn:aws:iam::506868652945:role/amplify-moobusapps-dev-7cc68-authRole",
       "Region": "ap-southeast-1",
-      "DeploymentBucketName": "amplify-user14updated-dev-680fc-deployment",
-      "UnauthRoleName": "amplify-user14updated-dev-680fc-unauthRole",
-      "StackName": "amplify-user14updated-dev-680fc",
-      "StackId": "arn:aws:cloudformation:ap-southeast-1:643913568880:stack/amplify-user14updated-dev-680fc/44376660-c4ed-11f0-99f6-0afb81419611",
-      "AmplifyAppId": "d3grw8p615c0bo"
+      "DeploymentBucketName": "amplify-moobusapps-dev-7cc68-deployment",
+      "UnauthRoleName": "amplify-moobusapps-dev-7cc68-unauthRole",
+      "StackName": "amplify-moobusapps-dev-7cc68",
+      "StackId": "arn:aws:cloudformation:ap-southeast-1:506868652945:stack/amplify-moobusapps-dev-7cc68/3a0c9080-0623-11f1-bbec-028113544e35",
+      "AmplifyAppId": "d1e2u64e6a9wgh"
     },
     "categories": {
-      "api": {
-        "user14updated": {}
-      },
       "auth": {
-        "user14updated36572e51": {}
+        "moobusappsc354c1dbc354c1db": {}
+      },
+      "api": {
+        "moobusapps": {}
       }
     }
   }

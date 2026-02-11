@@ -1,12 +1,11 @@
 {
-  "AppSyncApiName": "user14updated",
+  "AppSyncApiName": "moobusapps",
   "DynamoDBBillingMode": "PAY_PER_REQUEST",
   "DynamoDBEnableServerSideEncryption": false,
   "AuthCognitoUserPoolId": {
     "Fn::GetAtt": [
-      "authuser14updated36572e51",
+      "authmoobusappsc354c1dbc354c1db",
       "Outputs.UserPoolId"
     ]
-  },
-  "AuthModeLastUpdated": "2025-11-20T02:25:44.491Z"
+  }
 }

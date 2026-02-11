@@ -1,16 +1,15 @@
 {
   "version": 1,
   "serviceConfiguration": {
-    "apiName": "user14updated",
+    "apiName": "moobusapps",
     "serviceName": "AppSync",
     "defaultAuthType": {
       "mode": "AWS_IAM"
     },
-    "conflictResolution": {},
     "additionalAuthTypes": [
       {
         "mode": "AMAZON_COGNITO_USER_POOLS",
-        "cognitoUserPoolId": "authuser14updated36572e51"
+        "cognitoUserPoolId": "authmoobusappsc354c1dbc354c1db"
       }
     ]
   }
